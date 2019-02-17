@@ -1,0 +1,17 @@
+{
+    "telegram": {
+        "token": "1234567890:xxxxxx",
+        "whitelist": [
+            "1234567890"
+        ]
+    },
+    "sms": {
+        "device_path": "/dev/ttyUSB0",
+        "device_baudrate": 115200,
+        "label": "My Phone"
+    },
+    "db": {
+        "path": "data.db"
+    },
+    "message_format": "{content}\n\nFrom {source}\nTo {label}\n{timestamp}"
+}
