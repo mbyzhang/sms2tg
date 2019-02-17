@@ -54,6 +54,7 @@ def decode(data: bytearray):
                 # content
                 elif bearer_record == 0x01:
                     bits = bitstring.BitArray(bytes=bearer_payload)
+                    logging.debug("Bearer payload = {}".format(bits.bin))
                     content_encoding = bits[:5].uint
                     content_length = bits[5:13].uint
 
@@ -62,7 +63,11 @@ def decode(data: bytearray):
                         content = bits[13:-3].bytes.decode('utf-16-be')
                     # ascii
                     elif content_encoding == 0x02:
-                        content = bits[13:-3].bytes.decode('ascii')
+                        content = bits[13:13 + content_length * 7]
+                        
+                        for i in range(0, content_length):
+                            content.insert('0b0', i * 8)
+                        content = content.bytes.decode('ascii')
                     else:
                         raise Exception('Unexpected encoding')
                     

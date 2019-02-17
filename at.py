@@ -71,8 +71,4 @@ def poll(callback):
         except Exception as e:
             logging.warning(e)
             time.sleep(0.5)
-            ser.flushinput()
 
-
-
-    
