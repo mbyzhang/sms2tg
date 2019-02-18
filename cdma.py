@@ -2,6 +2,7 @@ import logging
 import bitstring
 import datetime
 
+
 def decode(data: bytearray):
     result = dict()
     result['type'] = data[0]
@@ -51,11 +52,32 @@ def decode(data: bytearray):
                 # message_id
                 if bearer_record == 0x00:
                     result['message_id'] = bearer_payload
+                    result['long_message'] = (bearer_payload[2] & 0b1000 > 0)                        
                 # content
                 elif bearer_record == 0x01:
                     bits = bitstring.BitArray(bytes=bearer_payload)
+
                     content_encoding = bits[:5].uint
                     content_length = bits[5:13].uint
+
+                    if result['long_message']:
+                        udh_length = bits[13:21].uint
+                        udh = bits[21:21 + udh_length * 8].bytes
+
+                        r = 0
+                        while r < udh_length:
+                            udh_record = udh[r]
+                            udh_record_length = udh[r + 1]
+                            if udh_record == 0:
+                                assert(udh_record_length == 3)
+                                result['long_message_ref'] = udh[r + 2]
+                                result['long_message_total'] = udh[r + 3]
+                                result['long_message_index'] = udh[r + 4]
+                            else:
+                                logging.warning('Advanced UDH is currently not implemented')
+                            r += udh_record_length + 2
+                        
+                        del bits[13:21 + udh_length * 8]
 
                     # utf-16
                     if content_encoding == 0x04:
