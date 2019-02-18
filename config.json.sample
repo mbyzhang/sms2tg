@@ -13,5 +13,6 @@
     "db": {
         "path": "data.db"
     },
-    "message_format": "{content}\n\nFrom {source}\nTo {label}\n{timestamp}"
+    "message_format": "{content}\n\nFrom {source}\nTo {label}\n{timestamp}",
+    "call_format": "{source} is calling to {label}"
 }
