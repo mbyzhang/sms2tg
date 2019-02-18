@@ -8,6 +8,13 @@ import sqlite3
 
 logging.basicConfig(level=logging.DEBUG)
 
+def send_telegram(message: str):
+    for recipient in config['telegram']['whitelist']:
+        try:
+            bot.send_message(recipient, message)
+        except Exception as e:
+            logging.error("Failed to send message to {}".format(recipient))
+
 def on_message(source: str, content: str, timestamp: datetime.datetime, pdu: str):
     logging.info("New message from {} at {}: {}".format(source, timestamp.strftime('%c'), content))
     message = config['message_format'].format(source=source, timestamp=timestamp.strftime('%c'), 
@@ -15,11 +22,16 @@ def on_message(source: str, content: str, timestamp: datetime.datetime, pdu: str
     dbc.execute('INSERT INTO sms(`from`, `to`, `content`, `timestamp`, `pdu`) VALUES(?, ?, ?, ?, ?)', 
         (source, config['sms']['label'], content, timestamp, pdu))
     dbconn.commit()
-    for recipient in config['telegram']['whitelist']:
-        try:
-            bot.send_message(recipient, message)
-        except Exception as e:
-            logging.error("Failed to send message to {}".format(recipient))
+    send_telegram(message)
+
+def on_call(source: str):
+    logging.info("Incoming call from {}".format(source))
+    message = config['call_format'].format(source=source, timestamp=datetime.datetime.now(), label=config['sms']['label'])
+    #dbc.execute('INSERT INTO sms(`from`, `to`, `content`, `timestamp`, `pdu`) VALUES(?, ?, ?, ?, ?)', 
+    #    (source, config['sms']['label'], content, timestamp, pdu))
+    #dbconn.commit()
+    send_telegram(message)
+
 
 if __name__=='__main__':
     logging.info("Starting sms2tg")
@@ -28,5 +40,5 @@ if __name__=='__main__':
     dbconn = sqlite3.connect(config['db']['path'])
     dbc = dbconn.cursor()
     at.init(config['sms']['device_path'], config['sms']['device_baudrate'])
-    at.listen(on_message)
+    at.listen(on_message, on_call)
     

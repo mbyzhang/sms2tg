@@ -54,7 +54,6 @@ def decode(data: bytearray):
                 # content
                 elif bearer_record == 0x01:
                     bits = bitstring.BitArray(bytes=bearer_payload)
-                    logging.debug("Bearer payload = {}".format(bits.bin))
                     content_encoding = bits[:5].uint
                     content_length = bits[5:13].uint
 

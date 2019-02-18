@@ -36,36 +36,44 @@ def init(port: str, baudrate: int):
     result = execute('AT')
     assert(result[0] == 'OK')
 
-def listen(callback):
-    fetch_unread(callback)
-    poll(callback)
+def listen(on_message, on_call):
+    fetch_unread(on_message)
+    poll(on_message, on_call)
 
-def fetch_unread(callback):
+def fetch_unread(on_message):
     logging.debug('Fetching unread messages')
     result = execute('AT+CMGL=4')
 
     for item in result:
         if item != '' and item != 'OK' and not item.startswith('+CMGL'):
                 message = cdma.decode(bytearray.fromhex(item))
-                callback(source=message['source'], content=message['content'], timestamp=message['timestamp'], pdu=item)
+                on_message(source=message['source'], content=message['content'], timestamp=message['timestamp'], pdu=item)
     
     execute('AT+CMGD=,2')
 
-def poll(callback):
+def poll(on_message, on_call):
     logging.debug('Polling new messages')
     while True:
         try: 
             line = read()
-            if line.startswith('+CMTI'):
-                _, args = line.split(' ')
-                index = args.split(',')[1]
-                logging.debug('SMS index is {}'.format(index))
-                result = execute('AT+CMGR={}'.format(index))
-                assert(len(result) == 4 and result[0].startswith('+CMGR'))
-                pdu = result[1]
-                message = cdma.decode(bytearray.fromhex(pdu))
-                callback(source=message['source'], content=message['content'], timestamp=message['timestamp'], pdu=pdu)
-                execute('AT+CMGD={}'.format(index))
+            if line.startswith('+'):
+                name, args = line.split(' ')
+                args = args.split(',')
+                name = name.rstrip(':').lstrip('+')
+                if name == 'CMTI':
+                    index = args[1]
+                    logging.debug('SMS index is {}'.format(index))
+                    result = execute('AT+CMGR={}'.format(index))
+                    assert(len(result) == 4 and result[0].startswith('+CMGR'))
+                    pdu = result[1]
+                    message = cdma.decode(bytearray.fromhex(pdu))
+                    on_message(source=message['source'], content=message['content'], timestamp=message['timestamp'], pdu=pdu)
+                    execute('AT+CMGD={}'.format(index))
+                elif name == 'CLIP':
+                    number = args[0].strip('"')
+                    execute('AT+CHUP')
+                    on_call(source=number)
+
         except TimeoutError:
             pass
         except Exception as e:
