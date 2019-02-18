@@ -42,3 +42,4 @@ python3 main.py
 * Forward SMS to Mail, Slack, IRC, etc.
 * Long message support
 * GSM module support
+* Message sending support
