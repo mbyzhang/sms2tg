@@ -1,6 +1,6 @@
 {
     "telegram": {
-        "token": "1234567890:xxxxxx",
+        "token": "1234567890:xxxx",
         "whitelist": [
             "1234567890"
         ]
@@ -13,6 +13,14 @@
     "db": {
         "path": "data.db"
     },
-    "message_format": "{content}\n\nFrom {source}\nTo {label}\n{timestamp}",
-    "call_format": "{source} is calling to {label}"
+    "notification_format": {
+        "call": "{source} is calling to {label}",
+        "message": "{content}\n\nFrom {source}\nTo {label}\n{timestamp}"
+    },
+    "phone": {
+        "autoreply_with_audio": true,
+        "autoreply_audio_exec": ["mpg123", "tts.mp3"],
+        "autoreply_with_sms": false,
+        "autoreply_content": ""
+    }
 }

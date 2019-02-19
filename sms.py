@@ -1,9 +1,9 @@
 import logging
 import bitstring
 import datetime
+import copy
 
-
-def decode(data: bytearray):
+def decode_pdu(data: bytearray):
     result = dict()
     result['type'] = data[0]
     p = 1
@@ -120,3 +120,47 @@ def decode(data: bytearray):
         
         p += length + 2
     return result
+
+long_message_sto = dict()
+
+def decode(pdu, index):
+    message = decode_pdu(bytearray.fromhex(pdu))
+    if message['long_message']:
+        lm_ref = message['long_message_ref']
+        lm_total = message['long_message_total']
+        lm_index = message['long_message_index']
+        logging.info('Received long message ({}/{}) with ref number {}'.format(lm_index, lm_total, lm_ref))
+        if lm_ref not in long_message_sto:
+            long_message_sto[lm_ref] = {
+                'length': 0,
+                'content': lm_total * [None],
+                'indice': list(),
+                'pdu': list()
+            }
+        long_message_sto[lm_ref]['content'][lm_index - 1] = message['content']
+        long_message_sto[lm_ref]['length'] += 1
+        long_message_sto[lm_ref]['indice'].append(index)
+        long_message_sto[lm_ref]['pdu'].append(pdu)
+        if long_message_sto[lm_ref]['length'] == lm_total:
+            concated_content = ''.join(long_message_sto[lm_ref]['content'])
+            concated_pdu = '\n'.join(long_message_sto[lm_ref]['pdu'])
+            indice = long_message_sto[lm_ref]['indice']
+            del long_message_sto[lm_ref]
+
+            return {
+                'source': message['source'],
+                'content': concated_content,
+                'timestamp': message['timestamp'],
+                'pdu': concated_pdu,
+                'indice': indice
+            }
+        else:
+            return None
+    else:
+        return {
+            'source': message['source'],
+            'content': message['content'],
+            'timestamp': message['timestamp'],
+            'pdu': pdu,
+            'indice': [index]
+        }

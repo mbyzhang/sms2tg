@@ -5,6 +5,7 @@ import json
 import datetime
 import telegram
 import sqlite3
+import subprocess
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -17,7 +18,7 @@ def send_telegram(message: str):
 
 def on_message(source: str, content: str, timestamp: datetime.datetime, pdu: str):
     logging.info("New message from {} at {}: {}".format(source, timestamp.strftime('%c'), content))
-    message = config['message_format'].format(source=source, timestamp=timestamp.strftime('%c'), 
+    message = config['notification_format']['message'].format(source=source, timestamp=timestamp.strftime('%c'), 
         content=content, label=config['sms']['label'])
     dbc.execute('INSERT INTO sms(`from`, `to`, `content`, `timestamp`, `pdu`) VALUES(?, ?, ?, ?, ?)', 
         (source, config['sms']['label'], content, timestamp, pdu))
@@ -26,7 +27,7 @@ def on_message(source: str, content: str, timestamp: datetime.datetime, pdu: str
 
 def on_call(source: str):
     logging.info("Incoming call from {}".format(source))
-    message = config['call_format'].format(source=source, timestamp=datetime.datetime.now(), label=config['sms']['label'])
+    message = config['notification_format']['call'].format(source=source, timestamp=datetime.datetime.now(), label=config['sms']['label'])
     #dbc.execute('INSERT INTO sms(`from`, `to`, `content`, `timestamp`, `pdu`) VALUES(?, ?, ?, ?, ?)', 
     #    (source, config['sms']['label'], content, timestamp, pdu))
     #dbconn.commit()
@@ -40,5 +41,7 @@ if __name__=='__main__':
     dbconn = sqlite3.connect(config['db']['path'])
     dbc = dbconn.cursor()
     at.init(config['sms']['device_path'], config['sms']['device_baudrate'])
-    at.listen(on_message, on_call)
+    at.set_callback(on_message, on_call)
+    at.set_reply_audio(config['phone']['autoreply_with_audio'], config['phone']['autoreply_audio_exec'])
+    at.start()
     
