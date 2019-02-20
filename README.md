@@ -1,6 +1,6 @@
 # sms2tg
 
-Forward SMS messages received from a CDMA module to Telegram.
+Forward SMS messages received from a CDMA module to Telegram, and much more.
 
 ## Features
 
@@ -38,6 +38,7 @@ python3 main.py
 ## TODO
 
 * Message sending support
+* DTMF support
 * Autoreply on incoming SMS
 * Multiple device support
 * Forward SMS to Mail, Slack, IRC, etc.
