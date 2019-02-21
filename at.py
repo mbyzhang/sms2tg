@@ -13,7 +13,7 @@ def init(port: str, baudrate: int):
     comm.execute('AT')
 
     # disable echo
-    comm.execute('ATE0')
+    # comm.execute('ATE0')
 
     # enable call indication
     comm.execute('AT+CLIP=1')
@@ -67,6 +67,10 @@ def end_call():
     comm.execute('ATH')
     if call_end_callback is not None: 
         call_end_callback(False)
+
+def send_message(number: str, content: str):
+    pdu, length = sms.encode(number, content)
+    comm.execute('AT+CMGS={}'.format(length), pdu)
 
 reply_audio_terminated = False
 

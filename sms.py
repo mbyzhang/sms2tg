@@ -59,6 +59,7 @@ def decode_pdu(data: bytearray):
 
                     content_encoding = bits[:5].uint
                     content_length = bits[5:13].uint
+                    logging.info("SMS content length = {}".format(content_length))
 
                     if result['long_message']:
                         udh_length = bits[13:21].uint
@@ -164,3 +165,54 @@ def decode(pdu, index):
             'pdu': pdu,
             'indice': [index]
         }
+
+def encode_pdu(number: str, content: str):
+    pdu = bytearray.fromhex('000002100204') 
+
+    number_bits = bitstring.BitArray('0b00')
+    
+    # number.length
+    number_bits.append(bitstring.BitArray(uint=len(number), length=8))
+
+    # number
+    for digit in number:
+        digit = int(digit)
+        number_bits.append(bitstring.BitArray(uint=digit + digit // 10 * 10, length=4))
+    
+    # reserved
+    number_bits.append('0b00')
+
+    number_pdu = number_bits.bytes
+
+    pdu.append(len(number_pdu))
+    pdu += number_pdu
+    pdu += bytearray.fromhex('08')
+
+    content_bits = bitstring.BitArray('0b00100')
+    content_length = len(content)
+
+    if content_length > 70:
+        raise Exception('Message is too long')
+    
+    content_bits.append(bitstring.BitArray(uint=content_length, length=8))
+
+    content_encoded = content.encode('utf-16-be')
+
+    content_bits.append(content_encoded)
+    content_bits.append('0b000')
+
+    content_pdu = content_bits.bytes
+
+    bearer_pdu = bytearray.fromhex('000320003001')
+    bearer_pdu.append(len(content_pdu))
+    bearer_pdu += content_pdu
+    bearer_pdu += bytearray.fromhex('0801000901000a01000d0101')
+
+    pdu.append(len(bearer_pdu))
+    pdu += bearer_pdu
+
+    return pdu
+
+def encode(number: str, content: str):
+    pdu = encode_pdu(number, content)
+    return (pdu.hex().upper(), len(pdu))
