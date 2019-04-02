@@ -6,7 +6,7 @@ Forward SMS messages received from a CDMA module to Telegram, and much more.
 
 * Forward incoming SMS instantly to your Telegram
 * Forward incoming call notification to your Telegram
-* Send SMS via Telegram Bot commands
+* Send SMS via Telegram Bot commands (buggy)
 * Auto-reply incoming call with prerecorded audio
 * Local SQLite database for SMS backup
 
@@ -43,3 +43,4 @@ python3 main.py
 * Multiple device support
 * Forward SMS to Mail, Slack, IRC, etc.
 * GSM module support
+* Forward phone call to Telegram Call
